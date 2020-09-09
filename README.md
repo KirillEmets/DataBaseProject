@@ -1,2 +1,2 @@
 # Database project
-Simple database project by Ilja kaminskij, Kiril Emets, Roman Khranovskij, group-95.
+Simple database project by Ilja kaminskij, Kirill Emets, Roman Khranovskij, group ip-95.
