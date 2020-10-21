@@ -3,7 +3,3 @@ Simple database project by Ilja kaminskij, Kirill Emets, Roman Khranovskij, grou
 
 ## Тех. Задание:
 [ТЗ](https://docs.google.com/document/d/1CjER1VnYI4jg9jXVJ4_SsRQa8YiSK94RGUlt0KSqMLs/edit?usp=sharing)
-
-## Usecase UML Diagram
-
-![Diagram](https://www.planttext.com/api/plantuml/svg/XLFDIiD04BxlKomzsKDUeRGNGKfHbDuA4imgXNO3oHQHAhGHl2W8uarGmHU8jT5g-lCAis_apER7fjXsGyBkDpFVDpCxOQpgAzjJlMw7CTLM7S7h1tkDvj7-ORt6c2TEb2tF4Ar9Lnxl2blrFE7t6SUr0ozw07CzX2b-0pqef_0hHF014pqa449zW_lxpFW4SpB2hCokbWMQll1o0Rv6WMSi3_eMldK0avRKGmuX_E0JwckO8HXcNe-ezOx64IOGwBkMX6SqVs7iA7DvWp4wnBb3WQcyb4M4ZZ7oVUQk2uCk41lZEyAW0C_nNwcRmiPOKaGAXIOqN6Uf2_srPMoLNYrhQy0wZJpFJRp_5rDpkktLcJ5AA4m968AfIIaoSnBW9UDrmzGGqSHns-SbsbnqtPxVaZnPD2ibHb_Za1nDxypPx6pb8cXoI5XeLs8iXQoEE5NMPILfUHfiEUwv990Oqmmigr8S_aINuCB8PXHMPUKMCq7YANI4iQgGZldpalKB)
