@@ -14,15 +14,10 @@ create TABLE Subjects (
     name VARCHAR(255) NOT NULL UNIQUE
 );
 
-create TABLE TeachersSubjects (
-    id serial PRIMARY KEY,
-    teacher VARCHAR(255) NOT NULL REFERENCES Teachers (name) ON DELETE CASCADE,
-    subject VARCHAR(255) NOT NULL REFERENCES Subjects (name) ON DELETE CASCADE
-);
-
 create TABLE Reviews (
     id serial PRIMARY KEY,
-    teacherSubjectId INTEGER NOT NULL REFERENCES TeachersSubjects (id) ON DELETE CASCADE,
+    teacher VARCHAR(255) NOT NULL REFERENCES Teachers (name) ON DELETE CASCADE,
+    subject VARCHAR(255) NOT NULL REFERENCES Subjects (name) ON DELETE CASCADE,
     owner VARCHAR(30) NOT NULL REFERENCES Users (name) ON DELETE CASCADE,
     text TEXT,
     mark SMALLINT NOT NULL
