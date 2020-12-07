@@ -28,9 +28,9 @@ create TABLE Reviews (
 
 /// Тестовые данные
 
-insert into Teachers (name) values ('Marik'), ('Baba');
+insert into Teachers (name) values ('Teacher1'), ('Teacher2');
 insert into Subjects (name) values ('Teor'), ('AK'), ('Ver');
-insert into TeachersSubjects (teacher, subject) values ('Marik', 'Teor'), ('Marik', 'Ver'), ('Baba', 'AK');
+insert into TeachersSubjects (teacher, subject) values ('Teacher1', 'Teor'), ('Teacher1', 'Ver'), ('Teacher2', 'AK');
 insert into Users (name, password) values ('Kirill', '12345');
 
 insert into Reviews (teacherSubjectId, owner, text, mark) 
