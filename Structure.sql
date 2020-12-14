@@ -24,8 +24,6 @@ create TABLE Reviews (
 );
 
 
-
-
 /// Тестовые данные
 
 insert into Teachers (name) values ('Teacher1'), ('Teacher2');

@@ -37,10 +37,10 @@ where
     automaton
   }
 
-  pub fn transition(&mut self, x: Input) { //takes some input
-    //do what corresponds to that state
-    //change state
-
+  //takes some input
+  //change state
+  //do what corresponds to that state
+  pub fn transition(&mut self, x: Input) { 
     self.state = *self.transition_table
       .get(&(self.state, x))
       .expect(&format!("No transition from state {:?} with input {:?}", self.state, x));
