@@ -69,15 +69,21 @@ pub fn validation(s: &str) -> bool {
 
 pub fn login_query() -> String {
   let answer = ask_login().unwrap();
+  clear_line();
 
   match validation(&answer) {
     true => answer,
-    false => login_query()
+    false => { 
+      let s = login_query();
+      clear_line();
+      s
+    }
   }
 }
 
 pub fn password_query(s: &str) -> String {
   let answer = ask_password(s).unwrap();
+  clear_line();
 
   match validation(&answer) {
     true => answer,
@@ -87,7 +93,6 @@ pub fn password_query(s: &str) -> String {
 
 pub fn auth(s: &str) -> String {
   let login = login_query();
-  println!("{}", login);
   //go to db and check existance of login
 
   let password = password_query(s);
