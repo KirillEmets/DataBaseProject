@@ -1,106 +1,58 @@
 extern crate dialoguer;
 extern crate console;
 
-use dialoguer::{
-  Select,
-  theme::ColorfulTheme,
-  Input,
-  Password
-};
-use console::Term;
+mod menu;
+mod automaton;
+
+use crate::menu::auth::*;
+use crate::automaton::*;
+
+#[derive(PartialEq, Eq, Clone, Copy, Hash, Debug)]
+enum MenuState {
+  Auth,
+  Main,
+  Review,
+  Show
+}
+use MenuState::*;
+
+struct User {
+  login: String
+}
 
 fn main() {
-  let option = make_choice(vec!["Login", "Register"], "New here?");
-  let choice_result = option.unwrap();
-  println!("Let's {}", choice_result);
-  auth(&choice_result);
-}
+  let mut transition_table: HashMap<(MenuState, &str), MenuState> = HashMap::new();
+  transition_table.insert((Auth, "login_succesful"), Main);
+  transition_table.insert((Main, "Logout")         , Auth);
 
-fn clear_line() {
-  let term = Term::stdout();
-  term.move_cursor_up(1).expect("Cursor moving error");
-  term.clear_line().expect("Failed to clear line");
-}
+  let mut callbacks: HashMap<MenuState, fn(&mut Automaton<MenuState, &str>)> = HashMap::new();
 
-fn make_choice(options: Vec<&str>, title: &str) -> std::io::Result<String> {
-  println!("{}", title);
-  let option_index = Select::with_theme(&ColorfulTheme::default())
-    .items(&options)
-    .default(0)
-    .interact()?;
-  clear_line();
-  let option = options[option_index];
-  Ok(String::from(option))
-}
+  callbacks.insert(Auth, |automaton| {
+    let option = make_choice(vec![
+        "Login", 
+        "Register"
+      ], 
+      "New here?"
+    ).unwrap();
+    let auth_res = auth(&option);
 
-fn ask_login() -> std::io::Result<String> {
-  let input: String = Input::new()
-    .with_prompt("Entrer Login")
-    .interact_text()?;
-  Ok(input)
-}
+    // automaton.transition(auth_res);
+    automaton.transition("login_succesful");
+  });
 
-fn ask_password(s: &str) -> std::io::Result<String> {
-  match s {
-    "Register" => {
-      Ok(
-        Password::new()
-          .with_prompt("New Password")
-          .with_confirmation("Confirm password", "Passwords mismatching")
-          .interact()?
-      )
-    },
-    "Login" => {
-      Ok(
-        Password::new()
-          .with_prompt("Enter Password")
-          .interact()?
-      )
-    },
-    _ => unreachable!()
-  }
+  callbacks.insert(Main, |automaton| {
+    let option = make_choice(vec![
+        "Show Subjects", 
+        "Show Teachers", 
+        "Make Review", 
+        "Logout", 
+        "Exit"
+      ], "");
+    
+    if let Ok("Exit") = option { return; }
 
-}
- 
-fn validation(s: &str) -> bool {
-  match s.len() {
-    0..=6 => {
-      println!("Too short");
-      false
-    },
-    7..=16 => {
-      println!("It's OK");
-      true
-    },
-    _ => {
-      println!("Too long");
-      false
-    }
-  }
-}
+    automaton.transition(option.unwrap());
+  });
 
-fn login_query() -> String {
-  let answer = ask_login().unwrap();
-  match validation(&answer) {
-    true => answer,
-    false => login_query()
-  }
-}
-
-fn password_query(s: &str) -> String {
-  let answer = ask_password(s).unwrap();
-  match validation(&answer) {
-    true => answer,
-    false => password_query(s)
-  }
-}
-
-fn auth(s: &str) {
-  let login = login_query();
-  println!("{}", login);
-  //go to db and check existance of login
-  let password = password_query(s);
-  //go to db and check password if login
-  // let pass_result = match handle {
-  // }
+  let menu = Automaton::new(callbacks, transition_table, Auth);
 }
