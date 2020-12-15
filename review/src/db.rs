@@ -1,57 +1,46 @@
-use postgres::{Client, Error, NoTls};
+use postgres::{Client, Error, NoTls, row::Row, types::ToSql};
 
-struct User {
-  id: i32,
-  name: String,
-  password: String
+pub struct User {
+  pub id: i32,
+  pub name: String,
+  pub password: String
 }
 
-struct Teacher {
-  id: i32,
-  name: String
+pub struct Teacher {
+  pub id: i32,
+  pub name: String
 }
 
-struct Subject {
-  id: i32,
-  name: String
+pub struct Subject {
+  pub id: i32,
+  pub name: String
 }
 
-struct Review {
-  id: i32,
-  teacher: Teacher,
-  subject: Subject,
-  owner: User,
-  text: String,
-  mark: u8
+pub struct Review {
+  pub id: i32,
+  pub teacher: Teacher,
+  pub subject: Subject,
+  pub owner: User,
+  pub text: String,
+  pub mark: u8
 }
 
-struct Db {
-  client: Client
+pub struct Db {
+  pub client: Client
 }
-
-// "postgresql://postgres:postgres@127.0.0.1/rust",
-// NoTls,
-
-// ("SELECT * FROM SystemUser", &[])? {
-//   let user = User {
-//       id: row.get(0),
-//       name: row.get(1),
-//       password: row.get(2)
-//   };
-//   println!("{} {} {}", user.id, user.name, user.password);
-// }
 
 impl Db {
-  fn new<T>(params: &str, tls_mode: T) -> Result<Db, Error> {
-    let mut client = Client::connect(params, tls_mode)?;
+  pub fn new(params: &str) -> Result<Db, Error> {
+    let mut client = Client::connect(params, NoTls)?;
     let db = Db {
       client
     };
+    println!("IT's OK");
     Ok(db)
   }
 
-  fn execute(&self, query: &str) -> Result<Vec<Row>, Error> {
-    let result = self.client.query(query, &[])?
+  pub fn execute(&mut self, query: &str, params: &[&(dyn ToSql + Sync)]) -> Result<Vec<Row>, Error> {
+    let result = self.client.query(query, params)?;
     Ok(result)
   }
 }

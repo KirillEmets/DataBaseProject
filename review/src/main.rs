@@ -3,9 +3,11 @@ extern crate console;
 
 mod menu;
 mod automaton;
+mod db;
 
 use crate::menu::auth::*;
 use crate::automaton::*;
+use crate::db::*;
 
 #[derive(PartialEq, Eq, Clone, Copy, Hash, Debug)]
 enum MenuState {
@@ -16,11 +18,23 @@ enum MenuState {
 }
 use MenuState::*;
 
-struct User {
+struct SystemUser {
   login: String
 }
 
 fn main() {
+  let mut db = Db::new("postgresql://postgres:postgres@127.0.0.1/rust").unwrap();
+  
+  let query = db.execute("SELECT * FROM SystemUser", &[]).unwrap();
+  for row in query {
+    let user = User {
+      id: row.get(0),
+      name: row.get(1),
+      password: row.get(2)
+    };
+    println!("{} {} {}", user.id, user.name, user.password);
+  }
+
   let mut transition_table: HashMap<(MenuState, &str), MenuState> = HashMap::new();
   transition_table.insert((Auth, "login_succesful"), Main);
   transition_table.insert((Main, "Logout")         , Auth);
