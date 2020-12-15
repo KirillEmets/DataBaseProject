@@ -10,7 +10,7 @@ where
 {
   state:            State,
   transition_table: HashMap<(State, Input), State>,
-  callbacks:        HashMap<State, fn(&mut Self)>
+  callbacks:        HashMap<State, Box<dyn Fn(&mut Self)>>
 }
 
 impl<State, Input> Automaton<State, Input>
@@ -19,7 +19,7 @@ where
   Input: Eq + Hash + Copy + Debug 
 {
   pub fn new(
-    callbacks:        HashMap<State, fn(&mut Self)>, 
+    callbacks:        HashMap<State, Box<dyn Fn(&mut Self)>>, 
     transition_table: HashMap<(State, Input), State>, 
     starting_state:   State
   ) -> Automaton<State, Input> 

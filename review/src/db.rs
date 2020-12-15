@@ -1,4 +1,4 @@
-use postgres::{Client, Error, NoTls, row::Row, types::ToSql};
+use postgres::{ Client, Error, NoTls, row::Row, types::ToSql };
 
 pub struct User {
   pub id: i32,

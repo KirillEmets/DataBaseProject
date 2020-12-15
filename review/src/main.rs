@@ -24,21 +24,11 @@ struct SystemUser {
 }
 
 fn main() {
-  // let mut db = Db::new("postgresql://postgres:postgres@127.0.0.1/rust").unwrap();
-  
-  // let query = db.execute("SELECT * FROM SystemUser", &[]).unwrap();
-  // for row in query {
-  //   let user = User {
-  //     id: row.get(0),
-  //     name: row.get(1),
-  //     password: row.get(2)
-  //   };
-  //   println!("{} {} {}", user.id, user.name, user.password);
-  // }
 
   let mut transition_table: HashMap<(MenuState, &str), MenuState> = HashMap::new();
   let transitions = vec![
-    ((Auth, "login_succesful")  , Main),
+    ((Auth, "login_successful")  , Main),
+    ((Auth, "registration_successful")  , Main),
     ((Auth, "login_failed")     , Auth),
     ((Main, "Logout")           , Auth),
     ((Main, "Show Subjects")    , ShowSubjects),
@@ -46,7 +36,7 @@ fn main() {
     ((Main, "Make Review")      , Review),
     ((ShowTeachers, "Back")     , Main),
     ((ShowSubjects, "Back")     , Main),
-    ((Review, "Post_succesful") , Main),
+    ((Review, "Post_successful") , Main),
     ((Review, "Post_failed")    , Review),
     ((Review, "Back")           , Main),
   ];
@@ -54,54 +44,54 @@ fn main() {
     transition_table.insert(i, j);
   }
 
-  let mut callbacks: HashMap<MenuState, fn(&mut Automaton<MenuState, &str>)> = HashMap::new();
+  let mut callbacks: HashMap<MenuState, Box<dyn Fn(&mut Automaton<MenuState, &str>)>>= HashMap::new();
 
-  callbacks.insert(Auth, |automaton| {
+  callbacks.insert(Auth, Box::new(|automaton| {
     use auth::*;
-
+    let mut review_db = Db::new("postgresql://postgres:postgres@127.0.0.1/review").unwrap();
     let option = make_choice(vec![
         "Login", 
         "Register"
       ], 
       "New here?"
     ).unwrap();
-    let auth_res = auth(&option);
+    let auth_res = auth(&option, review_db);
 
-    // automaton.transition(auth_res);
-    automaton.transition("login_succesful");
-  });
+    automaton.transition(&auth_res);
+    //automaton.transition("login_successful");
+  }));
 
-  callbacks.insert(Main, |automaton| {
+  callbacks.insert(Main, Box::new(|automaton| {
     let option = make_choice(vec![
-        "Show Subjects", 
-        "Show Teachers", 
-        "Make Review", 
-        "Logout", 
-        "Exit"
+      "Show Subjects", 
+      "Show Teachers", 
+      "Make Review", 
+      "Logout", 
+      "Exit"
       ], "");
     
     if let Ok("Exit") = option { return; }
 
     automaton.transition(option.unwrap());
-  });
+  }));
   
-  callbacks.insert(ShowTeachers, |automaton| {
+  callbacks.insert(ShowTeachers, Box::new(|automaton| {
     //display info
 
     let option = make_choice(vec!["Back"], "");
 
     automaton.transition(option.unwrap());
-  });
+  }));
   
-  callbacks.insert(ShowSubjects, |automaton| {
+  callbacks.insert(ShowSubjects, Box::new(|automaton| {
     //display info
 
     let option = make_choice(vec!["Back"], "");
 
     automaton.transition(option.unwrap());
-  });
+  }));
 
-  callbacks.insert(Review, |automaton| {
+  callbacks.insert(Review, Box::new(|automaton| {
     use review::*;
     //allow for input
 
@@ -112,7 +102,7 @@ fn main() {
         let res = post();
         
         // automaton.transition(res.unwrap());
-        automaton.transition("Post_succesful");
+        automaton.transition("Post_successful");
       },
       Ok("Back") => {
         automaton.transition("Back");
@@ -121,7 +111,7 @@ fn main() {
       Err(_) => unreachable!()
     }
 
-  });
+  }));
 
   let menu = Automaton::new(callbacks, transition_table, Auth);
 }
