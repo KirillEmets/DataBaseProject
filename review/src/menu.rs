@@ -7,6 +7,7 @@ use dialoguer::{
   theme::ColorfulTheme
 };
 use console::Term;
+use std::io::Result;
 
 pub fn clear_line() {
   let term = Term::stdout();
@@ -14,7 +15,7 @@ pub fn clear_line() {
   term.clear_line().expect("Failed to clear line");
 }
 
-pub fn make_choice<'a>(options: Vec<&'a str>, title: &str) -> std::io::Result<&'a str> {
+pub fn make_choice<'a>(options: Vec<&'a str>, title: &str) -> Result<&'a str> {
   println!("{}", title);
   
   let option_index = Select::with_theme(&ColorfulTheme::default())
