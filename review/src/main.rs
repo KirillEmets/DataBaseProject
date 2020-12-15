@@ -14,37 +14,44 @@ enum MenuState {
   Auth,
   Main,
   Review,
-  ShowTeachers,
-  ShowSubjects
+  Teachers,
+  Subjects
+}
+
+#[derive(PartialEq, Eq, Clone, Copy, Hash, Debug)]
+enum MenuInput {
+  Logout,
+  Subjects,
+  Teachers,
+  Review,
+  Success,
+  Back,
 }
 use MenuState::*;
+use MenuInput::*;
 
 struct SystemUser {
   login: String
 }
 
 fn main() {
-
-  let mut transition_table: HashMap<(MenuState, &str), MenuState> = HashMap::new();
+  let mut transition_table: HashMap<(MenuState, MenuInput), MenuState> = HashMap::new();
   let transitions = vec![
-    ((Auth, "login_successful")  , Main),
-    ((Auth, "registration_successful")  , Main),
-    ((Auth, "login_failed")     , Auth),
-    ((Main, "Logout")           , Auth),
-    ((Main, "Show Subjects")    , ShowSubjects),
-    ((Main, "Show Teachers")    , ShowTeachers),
-    ((Main, "Make Review")      , Review),
-    ((ShowTeachers, "Back")     , Main),
-    ((ShowSubjects, "Back")     , Main),
-    ((Review, "Post_successful") , Main),
-    ((Review, "Post_failed")    , Review),
-    ((Review, "Back")           , Main),
+    ((Auth, Success)              , Main),
+    ((Main, Logout)               , Auth),
+    ((Main, MenuInput::Subjects)  , MenuState::Subjects),
+    ((Main, MenuInput::Teachers)  , MenuState::Teachers),
+    ((Main, MenuInput::Review)    , MenuState::Review),
+    ((MenuState::Teachers, Back)  , Main),
+    ((MenuState::Subjects, Back)  , Main),
+    ((MenuState::Review, Success) , Main),
+    ((MenuState::Review, Back)    , Main),
   ];
   for (i, j) in transitions {
     transition_table.insert(i, j);
   }
 
-  let mut callbacks: HashMap<MenuState, Box<dyn Fn(&mut Automaton<MenuState, &str>)>>= HashMap::new();
+  let mut callbacks: HashMap<MenuState, Box<dyn Fn(&mut Automaton<MenuState, MenuInput>)>> = HashMap::new();
 
   callbacks.insert(Auth, Box::new(|automaton| {
     use auth::*;
@@ -55,9 +62,9 @@ fn main() {
       ], 
       "New here?"
     ).unwrap();
-    let auth_res = auth(&option, review_db);
+    auth(&option, &mut review_db);
 
-    automaton.transition(&auth_res);
+    automaton.transition(Success);
     //automaton.transition("login_successful");
   }));
 
@@ -68,48 +75,58 @@ fn main() {
       "Make Review", 
       "Logout", 
       "Exit"
-      ], "");
+      ], "")
+      .unwrap();
     
-    if let Ok("Exit") = option { return; }
+    let option = match option {
+      "Exit" => return,
+      "Show Subjects" => MenuInput::Subjects, 
+      "Show Teachers" => MenuInput::Teachers, 
+      "Make Review" => MenuInput::Review, 
+      "Logout" => Logout, 
+      _ => unreachable!()
+    };
 
-    automaton.transition(option.unwrap());
+    automaton.transition(option);
   }));
-  
-  callbacks.insert(ShowTeachers, Box::new(|automaton| {
+
+  callbacks.insert(MenuState::Teachers, Box::new(|automaton| {
     //display info
 
-    let option = make_choice(vec!["Back"], "");
+    make_choice(vec!["Back"], "").unwrap();
 
-    automaton.transition(option.unwrap());
+    automaton.transition(Back);
   }));
   
-  callbacks.insert(ShowSubjects, Box::new(|automaton| {
+  callbacks.insert(MenuState::Subjects, Box::new(|automaton| {
     //display info
+    
+    make_choice(vec!["Back"], "").unwrap();
 
-    let option = make_choice(vec!["Back"], "");
-
-    automaton.transition(option.unwrap());
+    automaton.transition(Back);
   }));
 
-  callbacks.insert(Review, Box::new(|automaton| {
+  callbacks.insert(MenuState::Review, Box::new(|automaton| {
     use review::*;
     //allow for input
 
     let res = review_menu();
+
+    automaton.transition(Back);
     
-    match res {
-      Ok("Post") => {
-        // let res = post();
+    // match res {
+    //   Ok("Post") => {
+    //     // let res = post();
         
-        // automaton.transition(res.unwrap());
-        automaton.transition("Post_successful");
-      },
-      Ok("Back") => {
-        automaton.transition("Back");
-      },
-      Ok(_) => unreachable!(),
-      Err(_) => unreachable!()
-    }
+    //     // automaton.transition(res.unwrap());
+    //     automaton.transition("Post_successful");
+    //   },
+    //   Ok("Back") => {
+    //     automaton.transition("Back");
+    //   },
+    //   Ok(_) => unreachable!(),
+    //   Err(_) => unreachable!()
+    // }
 
   }));
 

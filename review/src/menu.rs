@@ -8,6 +8,7 @@ use dialoguer::{
 };
 use console::Term;
 use std::io::Result;
+use crate::MenuInput::*;
 
 pub fn clear_line() {
   let term = Term::stdout();

@@ -46,7 +46,7 @@ where
       .expect(&format!("No transition from state {:?} with input {:?}", self.state, x));
       
     if let Some(callback) = self.callbacks.get(&self.state) {
-      callback(self);
+      // callback(self);
     }
   }
 }
