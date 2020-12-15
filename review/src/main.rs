@@ -109,7 +109,7 @@ fn main() {
     
     match res {
       Ok("Post") => {
-        let res = post();
+        // let res = post();
         
         // automaton.transition(res.unwrap());
         automaton.transition("Post_succesful");
