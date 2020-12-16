@@ -10,21 +10,21 @@ use crate::automaton::*;
 use crate::db::*;
 
 #[derive(PartialEq, Eq, Clone, Copy, Hash, Debug)]
-enum MenuState {
+pub enum MenuState {
   Auth,
   Main,
   Review,
-  Teachers,
-  Subjects
+  Show
 }
 
 #[derive(PartialEq, Eq, Clone, Copy, Hash, Debug)]
-enum MenuInput {
+pub enum MenuInput {
   Logout,
   Subjects,
   Teachers,
   Review,
   Success,
+  Failed,
   Back,
   None
 }
@@ -38,13 +38,13 @@ struct SystemUser {
 fn main() {
   let transition_table = Box::new(|state: MenuState, x: MenuInput| -> MenuState {
     match (state, x) {
+      (Auth, Failed)               => Auth,
       (Auth, Success)              => Main,
       (Main, Logout)               => Auth,
-      (Main, MenuInput::Subjects)  => MenuState::Subjects,
-      (Main, MenuInput::Teachers)  => MenuState::Teachers,
+      (Main, Subjects)             => Show,
+      (Main, Teachers)             => Show,
       (Main, MenuInput::Review)    => MenuState::Review,
-      (MenuState::Teachers, Back)  => Main,
-      (MenuState::Subjects, Back)  => Main,
+      (Show, Back)                 => Main,
       (MenuState::Review, Success) => Main,
       (MenuState::Review, Back)    => Main,
       _ => Auth
@@ -52,21 +52,11 @@ fn main() {
   });
   
   let output_table = Box::new(|state: MenuState, x: MenuInput| -> Option<MenuInput> {
-    match (state, x) {
-      (Auth, _) => {
-        use auth::*;
+    let mut review_db = Db::new("postgresql://postgres:postgres@127.0.0.1/review").unwrap();
+    clear_screen();
 
-        // let mut review_db = Db::new("postgresql://postgres:postgres@127.0.0.1/review").unwrap();
-        let option = make_choice(vec![
-            "Login", 
-            "Register"
-          ], 
-          "New here?"
-        ).unwrap();
-        // auth(&option, &mut review_db);
-    
-        Some(Success)
-      },
+    match (state, x) {
+      (Auth, _) => auth::auth(&mut review_db),
       (Main, _) => {
         let option = make_choice(vec![
           "Show Subjects", 
@@ -79,34 +69,28 @@ fn main() {
         
         match option {
           "Exit" => Option::None,
-          "Show Subjects" => Some(MenuInput::Subjects), 
-          "Show Teachers" => Some(MenuInput::Teachers), 
+          "Show Subjects" => Some(Subjects), 
+          "Show Teachers" => Some(Teachers), 
           "Make Review" => Some(MenuInput::Review), 
           "Logout" => Some(Logout), 
           _ => unreachable!()
         }
       },
-      (MenuState::Teachers, _) => {
+      (Show, Teachers) => {
         //display info
 
         make_choice(vec!["Back"], "").unwrap();
 
         Some(Back)
       },
-      (MenuState::Subjects, _) => {
+      (Show, Subjects) => {
         // display info
 
         make_choice(vec!["Back"], "").unwrap();
 
         Some(Back)
       },
-      (MenuState::Review, _) => {
-        use review::*;
-
-        review_menu().unwrap();
-
-        Some(Back)
-      },
+      (MenuState::Review, _) => review::review(&mut review_db),
       _ => Option::None
     }
   });

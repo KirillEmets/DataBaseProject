@@ -1,35 +1,64 @@
-use dialoguer::{
-  Input
-};
+use dialoguer::Input;
 use super::*;
 
-pub fn review_menu<'a>() -> std::io::Result<&'a str> {
+fn new_teacher<'a>(db: &mut Db) -> std::io::Result<&'a str> {
+  let teacher_name: String = Input::new()
+  .with_prompt("Write teacher's name")
+  // .default("leave empty to return back".into())
+  .interact_text()?;
+
+  todo!()
+}
+
+fn new_subject<'a>(db: &mut Db) -> std::io::Result<&'a str> {
+  let subject_name: String = Input::new()
+    .with_prompt("Write subject's name")
+    // .default("leave empty to return back".into())
+    .interact_text()?;
+
+  todo!()
+}
+
+fn get_teachers<'a>(db: &mut Db) -> Vec<&'a str> {
+  vec!["some", "idiots"]
+}
+
+fn get_subjects<'a>(db: &mut Db) -> Vec<&'a str> {
+  vec!["some", "bullshit", "subjects"]
+}
+
+fn post(teacher: &str, subject: &str, review: &str, db: &mut Db) -> std::io::Result<()> {
+
+  todo!()
+}
+
+pub fn review(db: &mut Db) -> Option<MenuInput> {
   const BACK: &str = "I want back to main menu";
 
-  let mut teachers = get_teachers(); 
-  teachers.push("New one");
-  teachers.push(BACK);
+  let mut teachers_option_list = get_teachers(db); 
+  teachers_option_list.push("New one");
+  teachers_option_list.push(BACK);
 
-  let selected_teacher = match make_choice(teachers, "Who's teacher?")? {
+  let selected_teacher = match make_choice(teachers_option_list, "Who's a teacher?").unwrap() {
     "New one" => {
-      new_teacher()?
+      new_teacher(db).unwrap()
     },
     BACK => {
-      return Ok("Back")
+      return Some(Back)
     },
     option => option
   };
 
-  let mut subjects = get_subjects(); 
-  subjects.push("New one");
-  subjects.push(BACK);
+  let mut subjects_option_list = get_subjects(db); 
+  subjects_option_list.push("New one");
+  subjects_option_list.push(BACK);
 
-  let selected_subject = match make_choice(subjects, "What's the subject?")? {
+  let selected_subject = match make_choice(subjects_option_list, "What's a subject?").unwrap() {
     "New one" => {
-      new_subject()?
+      new_subject(db).unwrap()
     },
     BACK => {
-      return Ok("Back")
+      return Some(Back)
     },
     option => option
   };
@@ -37,36 +66,14 @@ pub fn review_menu<'a>() -> std::io::Result<&'a str> {
   let review: String = Input::new()
     .with_prompt("Write your review")
     .default("leave empty to return to the main menu".into())
-    .interact_text()?;
+    .interact_text().unwrap();
 
   match review.as_str() {
-    "leave empty to return to the main menu" => Ok("Back"),
+    "leave empty to return to the main menu" => (),
     r => { 
-      post(selected_teacher, selected_subject, r)?;
-      Ok("Post")
+      post(selected_teacher, selected_subject, r, db).unwrap();
     }
   }
-}
 
-fn new_teacher<'a>() -> std::io::Result<&'a str> {
-
-  todo!()
-}
-
-fn new_subject<'a>() -> std::io::Result<&'a str> {
-
-  todo!()
-}
-
-fn get_teachers<'a>() -> Vec<&'a str> {
-  vec!["some", "idiots"]
-}
-
-fn get_subjects<'a>() -> Vec<&'a str> {
-  vec!["some", "bullshit", "subjects"]
-}
-
-pub fn post(teacher: &str, subject: &str, review: &str) -> std::io::Result<()> {
-
-  todo!()
+  Some(Back)
 }

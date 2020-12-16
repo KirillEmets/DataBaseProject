@@ -1,5 +1,4 @@
 pub mod auth;
-pub mod main;
 pub mod review;
 
 use dialoguer::{
@@ -8,7 +7,12 @@ use dialoguer::{
 };
 use console::Term;
 use std::io::Result;
-use crate::MenuInput::*;
+pub use crate::*;
+
+pub fn clear_screen() {
+  let term = Term::stdout();
+  term.clear_screen().expect("Failed to clear line");
+}
 
 pub fn clear_line() {
   let term = Term::stdout();
