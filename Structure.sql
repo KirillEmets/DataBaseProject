@@ -22,25 +22,3 @@ create TABLE Reviews (
     text TEXT,
     mark SMALLINT NOT NULL
 );
-
-
-/// Тестовые данные
-
-insert into Teachers (name) values ('Teacher1'), ('Teacher2');
-insert into Subjects (name) values ('Teor'), ('AK'), ('Ver');
-insert into TeachersSubjects (teacher, subject) values ('Teacher1', 'Teor'), ('Teacher1', 'Ver'), ('Teacher2', 'AK');
-insert into Users (name, password) values ('Kirill', '12345');
-
-insert into Reviews (teacherSubjectId, owner, text, mark) 
-    values 
-    (
-        1,
-        'Kirill',
-        'Это плохой предмет и препод мне не нравиться!',
-        3
-    );
-
-///
-
-select teacher from TeachersSubjects where id = 1;
-select subject from TeachersSubjects where id = 1;
