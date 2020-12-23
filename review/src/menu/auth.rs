@@ -32,26 +32,19 @@ fn ask_password(s: &str) -> IOResult<String> {
     },
     _ => unreachable!()
   }
-
-}
- 
-fn validate(s: &str) -> bool {
-  match s.len() {
-    0..=4 => {
-      println!("Too short");
-      false
-    },
-    5..=16 => true,
-    _ => {
-      println!("Too long");
-      false
-    }
-  }
 }
 
 fn check_login(login: &str, option: &str, db: &mut Db) -> bool {
-  if !validate(login) {
-    return false;
+  match login.len() {
+    0..=4 => {
+      println!("Too short");
+      return false
+    },
+    5..=16 => (),
+    _ => {
+      println!("Too long");
+      return false
+    }
   }
 
   let query = db.execute("SELECT name FROM Users WHERE name = $1", &[&login]);
@@ -80,8 +73,16 @@ fn check_login(login: &str, option: &str, db: &mut Db) -> bool {
 }
 
 fn check_password(login: &str, input_password: &str, db: &mut Db) -> bool {
-  if !validate(input_password) {
-    return false;
+  match input_password.len() {
+    0..=4 => {
+      println!("Too short");
+      return false
+    },
+    5..=16 => (),
+    _ => {
+      println!("Too long");
+      return false
+    }
   }
 
   let query = db
@@ -112,8 +113,6 @@ pub fn auth<'a>(db: &mut Db, user: &mut Option<SystemUser>) -> Option<MenuInput>
 
   let mut login = ask_login().unwrap();
   while !check_login(&login, option, db) {
-    clear_screen();
-
     login = ask_login().unwrap();
   }
 
@@ -124,15 +123,12 @@ pub fn auth<'a>(db: &mut Db, user: &mut Option<SystemUser>) -> Option<MenuInput>
   match option {
     "Login" => {
       while !check_password(&login, &password, db) {  
-        clear_screen();
         password = ask_password(option).unwrap(); 
       }
     },
-    "Register" => {
-      create_user(&login, &password, db);
-    },
+    "Register" => create_user(&login, &password, db),
     _ => unreachable!()
-  }
+  };
 
   Some(Success)
 }

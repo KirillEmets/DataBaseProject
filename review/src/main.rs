@@ -37,7 +37,9 @@ pub struct SystemUser {
 }
 
 fn main() {
-  let transition_table = Box::new(|state: &MenuState, x: &MenuInput, user: &mut Option<SystemUser>| -> MenuState {
+  let mut review_db = Db::new("postgresql://postgres:12hr56tf@127.0.0.1/review");
+
+  let transition_table = Box::new(|state: &MenuState, x: &MenuInput, _: &mut (Option<SystemUser>, Db)| -> MenuState {
     match (state, x) {
       (Auth, Failed)               => Auth,
       (Auth, Success)              => Main,
@@ -52,12 +54,9 @@ fn main() {
     }
   });
   
-  let output_table = Box::new(|state: &MenuState, x: &MenuInput, user: &mut Option<SystemUser>| -> Option<MenuInput> {
-    clear_screen();
-    let mut review_db = Db::new("postgresql://postgres:12hr56tf@127.0.0.1/review");
-
-    match (state, x) {
-      (Auth, _) => auth::auth(&mut review_db, user),
+  let output_table = Box::new(|state: &MenuState, x: &MenuInput, (user, review_db): &mut (Option<SystemUser>, Db)| -> Option<MenuInput> {
+    let res = match (state, x) {
+      (Auth, _) => auth::auth(review_db, user),
       (Main, _) => {
         let option = make_choice(vec![
           "Show Subjects", 
@@ -81,14 +80,14 @@ fn main() {
         //display info
         match x {
           Teachers => {
-            let teachers = review::get_teachers(&mut review_db);
+            let teachers = review::get_teachers(review_db);
             println!("Teachers\n");
             for teacher in teachers {
               println!("{}", teacher.name);
             } 
           },
           Subjects => {
-            let subjects = review::get_subjects(&mut review_db);
+            let subjects = review::get_subjects(review_db);
             println!("Subjects\n");
             for subject in subjects {
               println!("{}", subject.name);
@@ -101,12 +100,15 @@ fn main() {
 
         Some(Back)
       },
-      (MenuState::Review, _) => review::review(&mut review_db, user.clone().unwrap().login.as_str()),
-      _ => Option::None
-    }
+      (MenuState::Review, _) => review::review(review_db, user.clone().unwrap().login.as_str())
+    };
+
+    clear_screen();
+
+    res
   });
   
-  let mut menu = Automaton::new(output_table, transition_table, Auth, Option::None);
+  let mut menu = Automaton::new(output_table, transition_table, Auth, (Option::None, review_db));
   let mut input = Some(None);
 
   while let Some(output) = menu.transition(input) {

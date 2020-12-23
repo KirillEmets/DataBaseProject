@@ -1,8 +1,3 @@
-pub use std::collections::HashMap;
-pub use std::cmp::Eq;
-pub use std::hash::Hash;
-pub use std::fmt::Debug;
-
 pub struct Automaton<State, Input, Output, Storage>
 {
   storage:          Storage,
@@ -17,7 +12,7 @@ impl<State, Input, Output, Storage> Automaton<State, Input, Output, Storage>
     output_table:     Box<dyn FnMut(&State, &Input, &mut Storage) -> Output>, 
     transition_table: Box<dyn FnMut(&State, &Input, &mut Storage) -> State>,
     starting_state:   State,
-    storage: Storage
+    storage:          Storage
   ) -> Automaton<State, Input, Output, Storage> 
   {
     Automaton {
