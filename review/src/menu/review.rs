@@ -2,32 +2,32 @@ use dialoguer::Input;
 use super::*;
 use crate::db::*;
 
-
-fn only_numbers(s: String) -> bool {
-  for c in s.chars() {
-    if !"0123456789".contains(c) {
-      return false;
-    }
-  }
-  true
-}
-
-fn new_teacher<'a>(db: &mut Db) -> std::io::Result<&'a str> {
+fn new_teacher<'a>(db: &mut Db) -> String {
   let teacher_name: String = Input::new()
-  .with_prompt("Write teacher's name")
-  // .default("leave empty to return back".into())
-  .interact_text()?;
+    .with_prompt("Write teacher's name")
+    // .default("leave empty to return back".into())
+    .interact().unwrap();
 
-  todo!()
+  db.execute(
+    "INSERT INTO teachers (name) VALUES ($1)", 
+    &[&teacher_name]
+  );
+
+  return teacher_name;
 }
 
-fn new_subject<'a>(db: &mut Db) -> std::io::Result<&'a str> {
+fn new_subject<'a>(db: &mut Db) -> String {
   let subject_name: String = Input::new()
     .with_prompt("Write subject's name")
     // .default("leave empty to return back".into())
-    .interact_text()?;
+    .interact().unwrap();
 
-  todo!()
+    db.execute(
+      "INSERT INTO subjects (name) VALUES ($1)", 
+      &[&subject_name]
+    );
+
+  return subject_name;
 }
 
 pub fn get_teachers(db: &mut Db) -> Vec<Teacher> {
@@ -43,7 +43,7 @@ pub fn get_teachers(db: &mut Db) -> Vec<Teacher> {
  teachers
 }
 
-pub fn get_subjects(db: &mut Db) -> Vec<Subject>{
+pub fn get_subjects(db: &mut Db) -> Vec<Subject> {
   let subjects = db.execute(
     "SELECT * FROM subjects", &[]
   )
@@ -64,7 +64,8 @@ fn post(teacher: &str, subject: &str, review: &str, owner: &str, mark: i16, db: 
 }
 
 pub fn review(db: &mut Db, owner: &str) -> Option<MenuInput> {
-  const BACK: &str = "I want back to main menu";
+  const NEW: &str = "New one";
+  const BACK: &str = "I want back to menu";
 
   let teachers = get_teachers(db);
 
@@ -72,17 +73,13 @@ pub fn review(db: &mut Db, owner: &str) -> Option<MenuInput> {
     .iter()
     .map(|teacher| teacher.name.as_str())
     .collect(); 
-  teachers_option_list.push("New one");
+  teachers_option_list.push(NEW);
   teachers_option_list.push(BACK);
 
   let selected_teacher = match make_choice(teachers_option_list, "Who's a teacher?").unwrap() {
-    "New one" => {
-      new_teacher(db).unwrap()
-    },
-    BACK => {
-      return Some(Back)
-    },
-    option => option
+    NEW => new_teacher(db),
+    BACK => return Some(Back),
+    option => String::from(option)
   };
 
   let subjects = get_subjects(db);
@@ -90,45 +87,40 @@ pub fn review(db: &mut Db, owner: &str) -> Option<MenuInput> {
     .iter()
     .map(|subject| subject.name.as_str())
     .collect(); 
-  subjects_option_list.push("New one");
+  subjects_option_list.push(NEW);
   subjects_option_list.push(BACK);
 
   let selected_subject = match make_choice(subjects_option_list, "What's a subject?").unwrap() {
-    "New one" => {
-      new_subject(db).unwrap()
-    },
-    BACK => {
-      return Some(Back)
-    },
-    option => option
+    NEW => new_subject(db),
+    BACK => return Some(Back),
+    option => String::from(option)
   };
   
   let review: String = Input::new()
     .with_prompt("Write your review")
     .default("leave empty to return to the main menu".into())
-    .interact_text().unwrap();
+    .interact().unwrap();
 
   let mark;
   loop {
     let input: String = Input::new()
       .with_prompt("Enter your mark")
       .default("leave empty to return to the main menu".into())
-      .interact_text().unwrap();
+      .interact().unwrap();
+
     match input.parse::<i16>() {
-      Ok(value) => {
+      Ok(value @ 1..=5) => {
         mark = value;
         break;
       },
-      Err(_) => {}
+      _ => println!("Please enter number between 1 and 5"),
     };
   }
 
   match review.as_str() {
     "leave empty to return to the main menu" => (),
-    r => { 
-      post(selected_teacher, selected_subject, r, owner, mark, db);
-    }
-  }
+    r => post(&selected_teacher, &selected_subject, r, owner, mark, db)
+  };
 
   Some(Back)
 }

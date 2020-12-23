@@ -54,7 +54,7 @@ fn main() {
   
   let output_table = Box::new(|state: &MenuState, x: &MenuInput, user: &mut Option<SystemUser>| -> Option<MenuInput> {
     clear_screen();
-    let mut review_db = Db::new("postgresql://postgres:postgres@127.0.0.1/review");
+    let mut review_db = Db::new("postgresql://postgres:12hr56tf@127.0.0.1/review");
 
     match (state, x) {
       (Auth, _) => auth::auth(&mut review_db, user),
