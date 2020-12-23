@@ -1,5 +1,4 @@
 use std::io::Result as IOResult;
-use postgres::Error;
 use dialoguer::{
   Input,
   Password

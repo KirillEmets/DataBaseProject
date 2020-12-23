@@ -37,10 +37,7 @@ pub struct SystemUser {
 }
 
 fn main() {
-
-  let mut user: Option<SystemUser> = Option::None;
-
-  let transition_table = Box::new(|state: MenuState, x: MenuInput, user: &mut Option<SystemUser>| -> MenuState {
+  let transition_table = Box::new(|state: &MenuState, x: &MenuInput, user: &mut Option<SystemUser>| -> MenuState {
     match (state, x) {
       (Auth, Failed)               => Auth,
       (Auth, Success)              => Main,
@@ -55,7 +52,7 @@ fn main() {
     }
   });
   
-  let output_table = Box::new(|state: MenuState, x: MenuInput, mut user: &mut Option<SystemUser>| -> Option<MenuInput> {
+  let output_table = Box::new(|state: &MenuState, x: &MenuInput, user: &mut Option<SystemUser>| -> Option<MenuInput> {
     clear_screen();
     let mut review_db = Db::new("postgresql://postgres:postgres@127.0.0.1/review");
 
@@ -80,24 +77,26 @@ fn main() {
           _ => unreachable!()
         }
       },
-      (Show, Teachers) => {
+      (Show, x) => {
         //display info
-        let teachers = review::get_teachers(&mut review_db);
-        println!("Teachers\n");
-        for teacher in teachers {
-          println!("{}", teacher.name);
-        } 
-        make_choice(vec!["Back"], "").unwrap();
+        match x {
+          Teachers => {
+            let teachers = review::get_teachers(&mut review_db);
+            println!("Teachers\n");
+            for teacher in teachers {
+              println!("{}", teacher.name);
+            } 
+          },
+          Subjects => {
+            let subjects = review::get_subjects(&mut review_db);
+            println!("Subjects\n");
+            for subject in subjects {
+              println!("{}", subject.name);
+            } 
+          },
+          _ => unreachable!()
+        }
 
-        Some(Back)
-      },
-      (Show, Subjects) => {
-        // display info
-        let subjects = review::get_subjects(&mut review_db);
-        println!("Subjects\n");
-        for subject in subjects {
-          println!("{}", subject.name);
-        } 
         make_choice(vec!["Back"], "").unwrap();
 
         Some(Back)
