@@ -31,12 +31,16 @@ pub enum MenuInput {
 use MenuState::*;
 use MenuInput::*;
 
-struct SystemUser {
+#[derive(Clone)]
+pub struct SystemUser {
   login: String
 }
 
 fn main() {
-  let transition_table = Box::new(|state: MenuState, x: MenuInput| -> MenuState {
+
+  let mut user: Option<SystemUser> = Option::None;
+
+  let transition_table = Box::new(|state: MenuState, x: MenuInput, user: &mut Option<SystemUser>| -> MenuState {
     match (state, x) {
       (Auth, Failed)               => Auth,
       (Auth, Success)              => Main,
@@ -51,12 +55,12 @@ fn main() {
     }
   });
   
-  let output_table = Box::new(|state: MenuState, x: MenuInput| -> Option<MenuInput> {
-    let mut review_db = Db::new("postgresql://postgres:postgres@127.0.0.1/review").unwrap();
+  let output_table = Box::new(|state: MenuState, x: MenuInput, mut user: &mut Option<SystemUser>| -> Option<MenuInput> {
     clear_screen();
+    let mut review_db = Db::new("postgresql://postgres:postgres@127.0.0.1/review");
 
     match (state, x) {
-      (Auth, _) => auth::auth(&mut review_db),
+      (Auth, _) => auth::auth(&mut review_db, user),
       (Main, _) => {
         let option = make_choice(vec![
           "Show Subjects", 
@@ -78,24 +82,32 @@ fn main() {
       },
       (Show, Teachers) => {
         //display info
-
+        let teachers = review::get_teachers(&mut review_db);
+        println!("Teachers\n");
+        for teacher in teachers {
+          println!("{}", teacher.name);
+        } 
         make_choice(vec!["Back"], "").unwrap();
 
         Some(Back)
       },
       (Show, Subjects) => {
         // display info
-
+        let subjects = review::get_subjects(&mut review_db);
+        println!("Subjects\n");
+        for subject in subjects {
+          println!("{}", subject.name);
+        } 
         make_choice(vec!["Back"], "").unwrap();
 
         Some(Back)
       },
-      (MenuState::Review, _) => review::review(&mut review_db),
+      (MenuState::Review, _) => review::review(&mut review_db, user.clone().unwrap().login.as_str()),
       _ => Option::None
     }
   });
   
-  let mut menu = Automaton::new(output_table, transition_table, Auth);
+  let mut menu = Automaton::new(output_table, transition_table, Auth, Option::None);
   let mut input = Some(None);
 
   while let Some(output) = menu.transition(input) {

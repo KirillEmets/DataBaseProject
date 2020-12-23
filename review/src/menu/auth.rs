@@ -50,40 +50,12 @@ fn validate(s: &str) -> bool {
   }
 }
 
-// fn login_query() -> String {
-//   let mut answer = ask_login().unwrap();
-
-//   while !validate(&answer) {
-//     answer = ask_login().unwrap();
-//   }
-
-//   answer
-// }
-
-// fn password_query(s: &str) -> String {
-//   let mut answer = ask_password(s).unwrap();
-
-//   while !validate(&answer) {
-//     answer = ask_password(s).unwrap();
-//   }
-
-//   answer
-// }
-
 fn check_login(login: &str, option: &str, db: &mut Db) -> bool {
   if !validate(login) {
     return false;
   }
 
-  let query = db.execute("SELECT name FROM Users WHERE name = $1", &[&login]).expect("SQL issue");
-  // match option {
-  //   "Login" => {
-  //     println!("User with name <{}> doesn't exist!", login);
-  //     false
-  //   },
-  //   "Register" => true,
-  //   _ => unreachable!()
-  // }
+  let query = db.execute("SELECT name FROM Users WHERE name = $1", &[&login]);
   match query.len() {
     0 => {
       match option {
@@ -117,22 +89,21 @@ fn check_password(login: &str, input_password: &str, db: &mut Db) -> bool {
     .execute(
       "SELECT password FROM Users WHERE name = $1", 
       &[&login]
-    ).expect("SQL issue");
+    );
 
   let db_password: &str = query[0].get(0);
   
   input_password == db_password
 }
 
-fn create_user(login: &str, password: &str, db: &mut Db) -> std::result::Result<(), Error> {
+fn create_user(login: &str, password: &str, db: &mut Db) {
   db.execute(
     "INSERT INTO Users VALUES ($1, $2)", 
     &[&login, &password]
-  )?;
-  Ok(())
+  );
 }
 
-pub fn auth(db: &mut Db) -> Option<MenuInput> {
+pub fn auth<'a>(db: &mut Db, user: &mut Option<SystemUser>) -> Option<MenuInput> {
   let option = make_choice(vec![
       "Login", 
       "Register"
@@ -147,6 +118,8 @@ pub fn auth(db: &mut Db) -> Option<MenuInput> {
     login = ask_login().unwrap();
   }
 
+  *user = Some(SystemUser { login: login.clone() });
+
   let mut password = ask_password(option).unwrap();
 
   match option {
@@ -157,15 +130,7 @@ pub fn auth(db: &mut Db) -> Option<MenuInput> {
       }
     },
     "Register" => {
-      match create_user(&login, &password, db) {
-        Ok(_) => (),
-        Err(_) =>  {
-          clear_screen();
-          println!("Failed to register user, try again");
-
-          return Some(Failed);
-        }
-      }
+      create_user(&login, &password, db);
     },
     _ => unreachable!()
   }

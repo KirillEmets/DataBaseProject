@@ -1,5 +1,19 @@
 use dialoguer::Input;
+use postgres::Error;
+use postgres::types::ToSql;
+use std::result::Result;
 use super::*;
+use crate::db::*;
+
+
+fn only_numbers(s: String) -> bool {
+  for c in s.chars() {
+    if !"0123456789".contains(c) {
+      return false;
+    }
+  }
+  true
+}
 
 fn new_teacher<'a>(db: &mut Db) -> std::io::Result<&'a str> {
   let teacher_name: String = Input::new()
@@ -19,23 +33,48 @@ fn new_subject<'a>(db: &mut Db) -> std::io::Result<&'a str> {
   todo!()
 }
 
-fn get_teachers<'a>(db: &mut Db) -> Vec<&'a str> {
-  vec!["some", "idiots"]
+pub fn get_teachers(db: &mut Db) -> Vec<Teacher> {
+  let teachers = db.execute(
+    "SELECT * FROM teachers", &[]
+  )
+  .iter()
+  .map(|row| Teacher {
+    id: row.get(0),
+    name: row.get(1)
+  })
+  .collect();
+ teachers
 }
 
-fn get_subjects<'a>(db: &mut Db) -> Vec<&'a str> {
-  vec!["some", "bullshit", "subjects"]
+pub fn get_subjects(db: &mut Db) -> Vec<Subject>{
+  let subjects = db.execute(
+    "SELECT * FROM subjects", &[]
+  )
+  .iter()
+  .map(|row| Subject {
+    id: row.get(0),
+    name: row.get(1)
+  })
+  .collect();
+  subjects
 }
 
-fn post(teacher: &str, subject: &str, review: &str, db: &mut Db) -> std::io::Result<()> {
-
-  todo!()
+fn post(teacher: &str, subject: &str, review: &str, owner: &str, mark: i64, db: &mut Db) {
+  let query = format!("INSERT INTO reviews VALUES ($1, $2, $3, $4, {})", mark);
+  db.execute(
+    "INSERT INTO reviews VALUES ($1, $2, $3, $4, $5)", &[&teacher, &subject, &owner, &review, &mark]
+  );
 }
 
-pub fn review(db: &mut Db) -> Option<MenuInput> {
+pub fn review(db: &mut Db, owner: &str) -> Option<MenuInput> {
   const BACK: &str = "I want back to main menu";
 
-  let mut teachers_option_list = get_teachers(db); 
+  let teachers = get_teachers(db);
+
+  let mut teachers_option_list: Vec<&str> = teachers
+    .iter()
+    .map(|teacher| teacher.name.as_str())
+    .collect(); 
   teachers_option_list.push("New one");
   teachers_option_list.push(BACK);
 
@@ -49,7 +88,11 @@ pub fn review(db: &mut Db) -> Option<MenuInput> {
     option => option
   };
 
-  let mut subjects_option_list = get_subjects(db); 
+  let subjects = get_subjects(db);
+  let mut subjects_option_list: Vec<&str> = subjects
+    .iter()
+    .map(|subject| subject.name.as_str())
+    .collect(); 
   subjects_option_list.push("New one");
   subjects_option_list.push(BACK);
 
@@ -68,10 +111,25 @@ pub fn review(db: &mut Db) -> Option<MenuInput> {
     .default("leave empty to return to the main menu".into())
     .interact_text().unwrap();
 
+  let mark;
+  loop {
+    let input: String = Input::new()
+      .with_prompt("Enter your mark")
+      .default("leave empty to return to the main menu".into())
+      .interact_text().unwrap();
+    match input.parse::<i64>() {
+      Ok(value) => {
+        mark = value;
+        break;
+      },
+      Err(_) => {}
+    };
+  }
+
   match review.as_str() {
     "leave empty to return to the main menu" => (),
     r => { 
-      post(selected_teacher, selected_subject, r, db).unwrap();
+      post(selected_teacher, selected_subject, r, owner, mark, db);
     }
   }
 

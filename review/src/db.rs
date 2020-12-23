@@ -26,23 +26,21 @@ pub struct Review {
 }
 
 pub struct Db {
-  // pub client: Client
+  pub client: Client
 }
 
 impl Db {
-  pub fn new(params: &str) -> Result<Db, Error> {
-    // let client = Client::connect(params, NoTls)?;
-    let db = Db {
-      // client
-    };
-    // println!("IT's OK");
-    Ok(db)
+  pub fn new(params: &str) -> Db {
+    let client = Client::connect(params, NoTls)
+      .expect("Something went wrong with connection to db");
+    Db {
+      client
+    }
   }
 
-  pub fn execute(&mut self, query: &str, params: &[&(dyn ToSql + Sync)]) -> Result<Vec<Row>, Error> {
-    // let result = self.client.query(query, params)?;
-    // Ok(result)
-    Ok(vec![])
+  pub fn execute(&mut self, query: &str, params: &[&(dyn ToSql + Sync)]) -> Vec<Row> {
+    self.client.query(query, params)
+      .expect("Something went wrong with execution of query")
   }
 }
 
