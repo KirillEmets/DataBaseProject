@@ -72,17 +72,24 @@ fn check_login(login: &str, option: &str, db: &mut Db) -> bool {
   }
 }
 
-fn check_password(login: &str, input_password: &str, db: &mut Db) -> bool {
+fn validate(input_password: &str) -> bool {
   match input_password.len() {
     0..=4 => {
       println!("Too short");
       return false
     },
-    5..=16 => (),
+    5..=16 => true,
     _ => {
       println!("Too long");
       return false
     }
+  }
+}
+
+fn check_password(login: &str, input_password: &str, db: &mut Db) -> bool {
+
+  if !validate(input_password) {
+    return false;
   }
 
   let query = db
@@ -90,7 +97,7 @@ fn check_password(login: &str, input_password: &str, db: &mut Db) -> bool {
       "SELECT password FROM Users WHERE name = $1", 
       &[&login]
     );
-
+  
   let db_password: &str = query[0].get(0);
   
   input_password == db_password
@@ -121,14 +128,19 @@ pub fn auth<'a>(db: &mut Db, user: &mut Option<SystemUser>) -> Option<MenuInput>
   let mut password = ask_password(option).unwrap();
 
   match option {
+    "Register" => {
+      while !validate(&password) {  
+        password = ask_password(option).unwrap(); 
+      }
+      create_user(&login, &password, db);
+    },
     "Login" => {
       while !check_password(&login, &password, db) {  
         password = ask_password(option).unwrap(); 
       }
     },
-    "Register" => create_user(&login, &password, db),
     _ => unreachable!()
-  };
+  }
 
   Some(Success)
 }

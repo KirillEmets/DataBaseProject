@@ -31,7 +31,7 @@ fn new_subject<'a>(db: &mut Db) -> String {
 }
 
 pub fn get_teachers(db: &mut Db) -> Vec<Teacher> {
-  let teachers = db.execute(
+  db.execute(
     "SELECT * FROM teachers", &[]
   )
   .iter()
@@ -39,12 +39,11 @@ pub fn get_teachers(db: &mut Db) -> Vec<Teacher> {
     id: row.get(0),
     name: row.get(1)
   })
-  .collect();
- teachers
+  .collect()
 }
 
 pub fn get_subjects(db: &mut Db) -> Vec<Subject> {
-  let subjects = db.execute(
+  db.execute(
     "SELECT * FROM subjects", &[]
   )
   .iter()
@@ -52,9 +51,25 @@ pub fn get_subjects(db: &mut Db) -> Vec<Subject> {
     id: row.get(0),
     name: row.get(1)
   })
-  .collect();
-  subjects
+  .collect()
 }
+
+pub fn get_reviews(db: &mut Db) -> Vec<Review> {
+  db.execute(
+    "SELECT * FROM reviews", &[]
+  )
+  .iter()
+  .map(|row| Review {
+    id: row.get(0),
+    teacher: row.get(1),
+    subject: row.get(2),
+    owner: row.get(3),
+    text: row.get(4),
+    mark: row.get(5)
+  })
+  .collect()
+}
+
 
 fn post(teacher: &str, subject: &str, review: &str, owner: &str, mark: i16, db: &mut Db) {
   db.execute(

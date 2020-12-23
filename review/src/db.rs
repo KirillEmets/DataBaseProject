@@ -18,11 +18,11 @@ pub struct Subject {
 
 pub struct Review {
   pub id: i32,
-  pub teacher: Teacher,
-  pub subject: Subject,
-  pub owner: User,
+  pub teacher: String,
+  pub subject: String,
+  pub owner: String,
   pub text: String,
-  pub mark: u8
+  pub mark: i16
 }
 
 pub struct Db {
