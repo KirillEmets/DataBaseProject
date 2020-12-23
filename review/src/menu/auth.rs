@@ -9,7 +9,7 @@ use crate::db::*;
 fn ask_login() -> IOResult<String> {
   let input: String = Input::new()
     .with_prompt("Enter Login")
-    .interact_text()?;
+    .interact()?;
   Ok(input)
 }
 
@@ -97,7 +97,7 @@ fn check_password(login: &str, input_password: &str, db: &mut Db) -> bool {
 
 fn create_user(login: &str, password: &str, db: &mut Db) {
   db.execute(
-    "INSERT INTO Users VALUES ($1, $2)", 
+    "INSERT INTO Users(name, password) VALUES ($1, $2)", 
     &[&login, &password]
   );
 }

@@ -1,7 +1,4 @@
 use dialoguer::Input;
-use postgres::Error;
-use postgres::types::ToSql;
-use std::result::Result;
 use super::*;
 use crate::db::*;
 
@@ -59,10 +56,10 @@ pub fn get_subjects(db: &mut Db) -> Vec<Subject>{
   subjects
 }
 
-fn post(teacher: &str, subject: &str, review: &str, owner: &str, mark: i64, db: &mut Db) {
-  let query = format!("INSERT INTO reviews VALUES ($1, $2, $3, $4, {})", mark);
+fn post(teacher: &str, subject: &str, review: &str, owner: &str, mark: i16, db: &mut Db) {
   db.execute(
-    "INSERT INTO reviews VALUES ($1, $2, $3, $4, $5)", &[&teacher, &subject, &owner, &review, &mark]
+    "INSERT INTO reviews(teacher, subject, owner, text, mark) VALUES ($1, $2, $3, $4, $5)", 
+    &[&teacher, &subject, &owner, &review, &mark]
   );
 }
 
@@ -117,7 +114,7 @@ pub fn review(db: &mut Db, owner: &str) -> Option<MenuInput> {
       .with_prompt("Enter your mark")
       .default("leave empty to return to the main menu".into())
       .interact_text().unwrap();
-    match input.parse::<i64>() {
+    match input.parse::<i16>() {
       Ok(value) => {
         mark = value;
         break;
