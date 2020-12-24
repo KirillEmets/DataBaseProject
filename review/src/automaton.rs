@@ -1,39 +1,26 @@
-pub struct Automaton<State, Input, Output, Storage>
+pub trait Automaton<State: Clone, Input, Output, Storage: Clone>
 {
-  storage:          Storage,
-  state:            State,
-  output_table:     Box<dyn FnMut(&State, &Input, &mut Storage) -> Output>,
-  transition_table: Box<dyn FnMut(&State, &Input, &mut Storage) -> State>,
-}
+  fn storage(&mut self) -> &mut Storage;
 
-impl<State, Input, Output, Storage> Automaton<State, Input, Output, Storage>
-{
-  pub fn new(
-    output_table:     Box<dyn FnMut(&State, &Input, &mut Storage) -> Output>, 
-    transition_table: Box<dyn FnMut(&State, &Input, &mut Storage) -> State>,
-    starting_state:   State,
-    storage:          Storage
-  ) -> Automaton<State, Input, Output, Storage> 
-  {
-    Automaton {
-      state: starting_state,
-      output_table,
-      transition_table,
-      storage
-    }
-  }
+  fn state(&mut self) -> &mut State;
 
-  //take some input
-  //change state
-  //emit what corresponds to that state and input
-  pub fn transition(&mut self, x: Option<Input>) -> Option<Output> { 
+  fn output_table(&mut self) -> &mut Box<dyn FnMut(&State, &Input, &mut Storage) -> Option<Output>>;
+
+  fn transition_table(&mut self) -> &mut Box<dyn FnMut(&State, &Input, &mut Storage) -> State>;
+
+  fn transition(&mut self, x: Option<Input>) -> Option<Output> { 
     match x {
       Some(x) => {
-        self.state = (self.transition_table)(&self.state, &x, &mut self.storage);
+        let state = self.state().clone();
+        let mut storage = self.storage().clone();
+
+        *self.state() = (self.transition_table())(&state, &x, &mut storage);
         
-        Some((self.output_table)(&self.state, &x, &mut self.storage))
+        (self.output_table())(&state, &x, &mut storage)
+    
       }
       None => None
     }
   }
+
 }

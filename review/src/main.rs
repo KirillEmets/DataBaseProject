@@ -37,10 +37,55 @@ pub struct SystemUser {
   login: String
 }
 
-fn main() {
-  let review_db = Db::new("postgresql://postgres:postgres@127.0.0.1/review");
+pub struct Menu {
+  storage:          Option<SystemUser>,
+  state:            MenuState,
+  output_table:     Box<dyn FnMut(&MenuState, &MenuInput, &mut Option<SystemUser>) -> Option<MenuInput>>,
+  transition_table: Box<dyn FnMut(&MenuState, &MenuInput, &mut Option<SystemUser>) -> MenuState>,
+}
 
-  let transition_table = Box::new(|state: &MenuState, x: &MenuInput, _: &mut (Option<SystemUser>, Db)| -> MenuState {
+impl Menu{
+  pub fn new(
+    output_table:     Box<dyn FnMut(&MenuState, &MenuInput, &mut Option<SystemUser>) -> Option<MenuInput>>, 
+    transition_table: Box<dyn FnMut(&MenuState, &MenuInput, &mut Option<SystemUser>) -> MenuState>,
+    starting_state:   MenuState,
+    storage:          Option<SystemUser>
+  ) -> Menu
+  {
+   Menu {
+      state: starting_state,
+      output_table,
+      transition_table,
+      storage
+    }
+  }
+}
+
+
+impl Automaton<MenuState, MenuInput, MenuInput, Option<SystemUser>> for Menu {
+
+  fn storage(&mut self) -> &mut Option<SystemUser> {
+    &mut self.storage
+  }
+
+  fn state(&mut self) -> &mut MenuState {
+    &mut self.state
+  }
+
+  fn output_table(&mut self) 
+    -> &mut Box<dyn FnMut(&MenuState, &MenuInput, &mut Option<SystemUser>) -> Option<MenuInput>> {
+    &mut self.output_table
+  }
+
+  fn transition_table(&mut self) -> &mut Box<dyn FnMut(&MenuState, &MenuInput, &mut Option<SystemUser>) -> MenuState> {
+    &mut self.transition_table
+  }
+}
+
+
+fn main() {
+
+  let transition_table = Box::new(|state: &MenuState, x: &MenuInput, _: &mut Option<SystemUser>| -> MenuState {
     match (state, x) {
       (Auth, Failed)               => Auth,
       (Auth, Success)              => Main,
@@ -55,9 +100,11 @@ fn main() {
     }
   });
   
-  let output_table = Box::new(|state: &MenuState, x: &MenuInput, (user, review_db): &mut (Option<SystemUser>, Db)| -> Option<MenuInput> {
+  let output_table = Box::new(|state: &MenuState, x: &MenuInput, user: &mut Option<SystemUser>| -> Option<MenuInput> {
+    let mut review_db = Db::new("postgresql://postgres:postgres@127.0.0.1/review");   
+   
     let res = match (state, x) {
-      (Auth, _) => auth::auth(review_db, user),
+      (Auth, _) => auth::auth(&mut review_db, user),
       (Main, _) => {
         let option = make_choice(vec![
           "Show Reviews",
@@ -83,21 +130,21 @@ fn main() {
         //display info
         match x {
           Teachers => {
-            let teachers = review::get_teachers(review_db);
+            let teachers = review::get_teachers(&mut review_db);
             println!("Teachers\n");
             for teacher in teachers {
               println!("{}", teacher.name);
             } 
           },
           Subjects => {
-            let subjects = review::get_subjects(review_db);
+            let subjects = review::get_subjects(&mut review_db);
             println!("Subjects\n");
             for subject in subjects {
               println!("{}", subject.name);
             } 
           },
           Reviews => {
-            let reviews = review::get_reviews(review_db);
+            let reviews = review::get_reviews(&mut review_db);
             println!("Reviews from our community\n");
             for review in reviews {
               println!("By: {}\nTeacher: {}\nSubject: {}\nWith mark: {}\nReview:\n{}\n", 
@@ -116,7 +163,7 @@ fn main() {
 
         Some(Back)
       },
-      (MenuState::Review, _) => review::review(review_db, user.clone().unwrap().login.as_str())
+      (MenuState::Review, _) => review::review(&mut review_db, user.clone().unwrap().login.as_str())
     };
 
     clear_screen();
@@ -124,10 +171,10 @@ fn main() {
     res
   });
   
-  let mut menu = Automaton::new(output_table, transition_table, Auth, (Option::None, review_db));
+  let mut menu = Menu::new(output_table, transition_table, Auth, Option::None);
   let mut input = Some(None);
 
   while let Some(output) = menu.transition(input) {
-    input = output;
+    input = Some(output);
   }
 }
