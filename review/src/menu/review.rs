@@ -2,7 +2,7 @@ use dialoguer::Input;
 use super::*;
 use crate::db::*;
 
-fn new_teacher<'a>(db: &mut Db) -> String {
+fn new_teacher(db: &mut Db) -> String {
   let teacher_name: String = Input::new()
     .with_prompt("Write teacher's name")
     // .default("leave empty to return back".into())
@@ -16,7 +16,7 @@ fn new_teacher<'a>(db: &mut Db) -> String {
   return teacher_name;
 }
 
-fn new_subject<'a>(db: &mut Db) -> String {
+fn new_subject(db: &mut Db) -> String {
   let subject_name: String = Input::new()
     .with_prompt("Write subject's name")
     // .default("leave empty to return back".into())
@@ -78,7 +78,7 @@ fn post(teacher: &str, subject: &str, review: &str, owner: &str, mark: i16, db: 
   );
 }
 
-pub fn review(db: &mut Db, owner: &str) -> Option<MenuInput> {
+pub fn review(db: &mut Db, owner: &str) -> Option<menu::Input> {
   const NEW: &str = "New one";
   const BACK: &str = "I want back to menu";
 
@@ -91,9 +91,9 @@ pub fn review(db: &mut Db, owner: &str) -> Option<MenuInput> {
   teachers_option_list.push(NEW);
   teachers_option_list.push(BACK);
 
-  let selected_teacher = match make_choice(teachers_option_list, "Who's a teacher?").unwrap() {
+  let selected_teacher = match make_choice(teachers_option_list, "Who's a teacher?") {
     NEW => new_teacher(db),
-    BACK => return Some(Back),
+    BACK => return Some(menu::Input::Back),
     option => String::from(option)
   };
 
@@ -105,9 +105,9 @@ pub fn review(db: &mut Db, owner: &str) -> Option<MenuInput> {
   subjects_option_list.push(NEW);
   subjects_option_list.push(BACK);
 
-  let selected_subject = match make_choice(subjects_option_list, "What's a subject?").unwrap() {
+  let selected_subject = match make_choice(subjects_option_list, "What's a subject?") {
     NEW => new_subject(db),
-    BACK => return Some(Back),
+    BACK => return Some(menu::Input::Back),
     option => String::from(option)
   };
   
@@ -137,5 +137,5 @@ pub fn review(db: &mut Db, owner: &str) -> Option<MenuInput> {
     r => post(&selected_teacher, &selected_subject, r, owner, mark, db)
   };
 
-  Some(Back)
+  Some(menu::Input::Back)
 }

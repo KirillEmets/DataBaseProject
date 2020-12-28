@@ -87,7 +87,6 @@ fn validate(input_password: &str) -> bool {
 }
 
 fn check_password(login: &str, input_password: &str, db: &mut Db) -> bool {
-
   if !validate(input_password) {
     return false;
   }
@@ -110,13 +109,13 @@ fn create_user(login: &str, password: &str, db: &mut Db) {
   );
 }
 
-pub fn auth<'a>(db: &mut Db, user: &mut Option<SystemUser>) -> Option<MenuInput> {
+pub fn auth(db: &mut Db, user: &mut Option<SystemUser>) -> Option<menu::Input> {
   let option = make_choice(vec![
       "Login", 
       "Register"
     ], 
     "New here?"
-  ).unwrap();
+  );
 
   let mut login = ask_login().unwrap();
   while !check_login(&login, option, db) {
@@ -142,5 +141,5 @@ pub fn auth<'a>(db: &mut Db, user: &mut Option<SystemUser>) -> Option<MenuInput>
     _ => unreachable!()
   }
 
-  Some(Success)
+  Some(menu::Input::Success)
 }

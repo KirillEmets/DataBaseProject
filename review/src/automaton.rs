@@ -1,23 +1,26 @@
-pub trait Automaton<State: Clone, Input, Output, Storage: Clone>
+pub trait Automaton<'a>
 {
-  fn storage(&mut self) -> &mut Storage;
+  type State: 'a;
+  type Input;
+  type Output;
+  type Storage: 'a;
 
-  fn state(&mut self) -> &mut State;
+  fn new(starting_state: Self::State, storage: Self::Storage) -> Self;
 
-  fn output_table(&mut self) -> &mut Box<dyn FnMut(&State, &Input, &mut Storage) -> Option<Output>>;
+  fn state_storage(&'a mut self) -> (&'a mut Self::State, &'a mut Self::Storage);
 
-  fn transition_table(&mut self) -> &mut Box<dyn FnMut(&State, &Input, &mut Storage) -> State>;
+  fn output_table(state: &Self::State, input: &Self::Input, storage: &mut Self::Storage) -> Option<Self::Output>;
 
-  fn transition(&mut self, x: Option<Input>) -> Option<Output> { 
+  fn transition_table(state: &Self::State, input: &Self::Input, storage: &mut Self::Storage) -> Self::State;
+
+  fn transition(&'a mut self, x: &Option<Self::Input>) -> Option<Self::Output> { 
     match x {
       Some(x) => {
-        let state = self.state().clone();
-        let mut storage = self.storage().clone();
+        let (state, storage) = self.state_storage();
 
-        *self.state() = (self.transition_table())(&state, &x, &mut storage);
+        *state = Self::transition_table(state, x, storage);
         
-        (self.output_table())(&state, &x, &mut storage)
-    
+        Self::output_table(state, x, storage)
       }
       None => None
     }
